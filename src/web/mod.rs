@@ -13,7 +13,7 @@ use log::info;
 use sqlx::postgres::{PgPoolOptions, Postgres};
 use utoipa::{openapi::security::{Http, HttpAuthScheme, SecurityScheme}, Modify, OpenApi};
 
-use crate::web::{dto::{auth::{logged_user_response::LoggedUserResponse, login_request::{LoginRequest, LoginResponse}, register_request::{RegisterRequest, RegisterResponse}}, me::notifications::NotificationResponse, user_claims::UserClaims}, routes::{auth::auth_routes, me::me_routes}};
+use crate::web::dto::{auth::{logged_user_response::LoggedUserResponse, login_request::{LoginRequest, LoginResponse}, register_request::{RegisterRequest, RegisterResponse}}, me::notifications::NotificationResponse, user_claims::UserClaims};
 
 #[derive(Clone, FromRef)]
 pub struct AppState {
@@ -42,11 +42,6 @@ pub async fn build_app() -> Router {
         info(description = "Users endpoints"),
         paths(
             routes::main::root::index,
-            routes::auth::root::login,
-            routes::auth::root::index,
-            routes::auth::root::register,
-            routes::auth::root::add_fcm_token,
-            routes::me::root::get_me_notifications,
         ), 
         modifiers(&SecurityAddon),
         components(
@@ -87,8 +82,6 @@ pub async fn build_app() -> Router {
     let app = Router::new()
         .with_state(state.clone())
         .route("/", get(routes::main::root::index))
-        .route("/json-schema", get(build_json_schema))
-        .merge(auth_routes(&state))
-        .merge(me_routes(&state));
+        .route("/json-schema", get(build_json_schema));
     app
 }
