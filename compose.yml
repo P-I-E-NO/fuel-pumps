@@ -1,0 +1,54 @@
+version: '3.9'
+
+networks:
+  users-net:
+    name: users-net
+
+volumes:
+  users_pgdata:
+  users_db_data:
+
+services:
+  postgres_db:
+    container_name: dockerissimo-postgres
+    image: postgres:16.1
+    networks:
+      - users-net
+    environment:
+      - POSTGRES_USER=dockerissimo_rust
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=fantastic_db
+    #volumes:
+    #  - users_db_data:/var/lib/postgresql/data
+    #  - users_pgdata:/var/lib/postgresql/data/pgdata
+  app:
+    container_name: dockerissimo-rust
+    build:
+      context: .
+      network: host
+    depends_on:
+      - postgres_db
+    networks:
+      - users-net
+    environment:
+      - CONN_URI=postgresql://dockerissimo_rust:pass@postgres_db:5432/fantastic_db
+      - RUST_LOG=trace
+      - JWT_SECRET=Poggaceo
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/code/src
+    entrypoint: ["cargo", "watch", "-x", "run"]
+  fcm:
+    image: test-fcm
+    networks:
+      - users-net
+    environment:
+      - DB_CONNECTION_STRING=postgresql://dockerissimo_rust:pass@postgres_db:5432/fantastic_db
+      - JWT_KEY=Poggaceo
+      - SERVICE_ACCOUNT_PATH=/code/firebase/pieno-app-firebase-adminsdk-v437b-0e77967c6f.json
+    ports:
+      - "3004:5050"
+    volumes:
+      - /Users/macca/uni/pieno/fcm-messenger/firebase/pieno-app-firebase-adminsdk-v437b-0e77967c6f.json:/code/firebase/pieno-app-firebase-adminsdk-v437b-0e77967c6f.json
+
